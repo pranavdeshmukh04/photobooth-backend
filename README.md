@@ -141,12 +141,14 @@ go run cmd/server/main.go
 3. Run `make lint` and `make test`
 4. Submit pull request
 
-**Commit Convention:**
+**Branch Convention:**
 
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation
-- `refactor:` Code refactoring
+- `feature/` - New feature
+- `fix/` - Bug fix
+- `setup/` - Project setup/infrastructure
+- `chore/` - Maintenance tasks
+- `docs/` - Documentation
+- `refactor/` - Code refactoring
 
 ---
 
