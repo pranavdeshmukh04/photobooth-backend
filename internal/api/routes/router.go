@@ -7,16 +7,15 @@ import (
 	"github.com/photobooth/backend/internal/api/middleware"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(authHandler *handlers.AuthHandler) *gin.Engine {
 	cfg := config.GetConfig()
 
 	// Initialize Gin router
 	router := gin.Default()
 
 	// Setup middleware
-	// router.Use(middleware.SetupCORS(cfg.AllowedOrigins))
-	router.Use(gin.Recovery())
-	// router.Use(middleware.Logging())
+	router.Use(middleware.SetupCORS(cfg.AllowedOrigins))
+	router.Use(middleware.Recovery())
 
 	// Health routes
 	health := router.Group("/health")
@@ -26,40 +25,46 @@ func SetupRouter() *gin.Engine {
 		health.GET("/ready", handlers.HealthReady)
 	}
 
- 	api := router.Group(cfg.APIPrefix)
-    {
-        // Auth routes (public)
-        auth := api.Group("/auth")
-        {
-            auth.POST("/register", handlers.Register)
-            auth.POST("/login", handlers.Login)
-            auth.POST("/refresh", handlers.Refresh)
-            auth.POST("/logout", handlers.Logout)
-            auth.GET("/me", handlers.Me)
-        }
+	api := router.Group(cfg.APIPrefix)
+	{
+		// Auth routes (public)
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+			auth.POST("/refresh", authHandler.Refresh)
+		}
 
-        // Protected routes (add JWT middleware)
-        protected := api.Group("")
-        protected.Use(middleware.JWTAuth())
-        {
-            // User routes
-            user := protected.Group("/users")
-            {
-                user.GET("/profile", handlers.GetProfile)
-                user.PATCH("/profile", handlers.UpdateProfile)
-                user.GET("/stats", handlers.GetStats)
-            }
+		// Protected auth routes
+		authProtected := api.Group("/auth")
+		authProtected.Use(middleware.JWTAuth())
+		{
+			authProtected.POST("/logout", authHandler.Logout)
+			authProtected.GET("/me", authHandler.Me)
+		}
 
-            // Photos routes
-            photos := protected.Group("/photos")
-            {
-                photos.POST("/upload", handlers.UploadPhoto)
-                photos.GET("/list", handlers.ListPhotos)
-                photos.GET("/get", handlers.GetPhoto)
-                photos.DELETE("/delete", handlers.DeletePhoto)
-            }
-        }
-    }
+		// Protected routes (add JWT middleware)
+		protected := api.Group("")
+		protected.Use(middleware.JWTAuth())
+		{
+			// User routes
+			user := protected.Group("/users")
+			{
+				user.GET("/profile", handlers.GetProfile)
+				user.PATCH("/profile", handlers.UpdateProfile)
+				user.GET("/stats", handlers.GetStats)
+			}
+
+			// Photos routes
+			photos := protected.Group("/photos")
+			{
+				photos.POST("/upload", handlers.UploadPhoto)
+				photos.GET("/list", handlers.ListPhotos)
+				photos.GET("/get", handlers.GetPhoto)
+				photos.DELETE("/delete", handlers.DeletePhoto)
+			}
+		}
+	}
 
 	return router
 }

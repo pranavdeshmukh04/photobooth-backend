@@ -16,17 +16,21 @@ var (
 func Connect(url, username, password, bucketName string, timeout time.Duration) error {
 	log.Println("Connecting to database...")
 
-	// Create cluster options
+	// Create cluster options with security config for Capella
 	options := gocb.ClusterOptions{
 		Authenticator: gocb.PasswordAuthenticator{
 			Username: username,
 			Password: password,
+		},
+		SecurityConfig: gocb.SecurityConfig{
+			TLSSkipVerify: false,
 		},
 	}
 
 	// Create cluster connection
 	cluster, err := gocb.Connect(url, options)
 	if err != nil {
+		log.Printf("Failed to connect to cluster: %v", err)
 		return err
 	}
 	Cluster = cluster
